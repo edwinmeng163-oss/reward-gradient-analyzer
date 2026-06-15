@@ -69,6 +69,16 @@ Hermes's `default` profile. RGA must stay fully isolated.
 - Claude reviews the ticket's evidence and `complete`s or `block`s it.
 - Ticket markdown drafts also kept in `tickets/` for human readability.
 
+### Notifications (no idle-waiting)
+- **After dispatching a Codex job**, Hermes launches a detached watcher so a desktop notice
+  fires the moment Codex finishes a turn (ready for review):
+  `nohup tools/rga-watch-codex.sh <job_id> "<ticket>" >/dev/null 2>&1 & disown`
+- **When Hermes marks a ticket done**, it fires a desktop notice:
+  `tools/rga-notify.sh "RGA · 工单完成" "<ticket> ✓ done"`
+- Both use `tools/rga-notify.sh` (macOS `osascript`). Mechanism: codex-orchestrator writes
+  `~/.codex-agent/jobs/<id>.turn-complete` on every `agent-turn-complete` (fires even though
+  the interactive codex session stays alive — so it's reliable). Nobody should sit and idle-wait.
+
 ---
 
 ## 4. Repo conventions
