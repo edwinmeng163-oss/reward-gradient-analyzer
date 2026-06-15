@@ -1,0 +1,150 @@
+{
+  "schema_version": "rga.game_config.schema.v1",
+  "game": "slay-the-spire",
+  "description": "Contract schema and example fields for Slay the Spire ROI/template specialists.",
+  "coordinate_space": {
+    "type": "normalized",
+    "origin": "top_left",
+    "range": [0.0, 1.0],
+    "analysis_height": 720
+  },
+  "ingest": {
+    "baseline_fps": 1.0,
+    "dense_fps": 6.0,
+    "analysis_height": 720,
+    "scene_threshold": 0.28,
+    "densify": {
+      "pre_s": 1.0,
+      "post_s": 2.0,
+      "max_windows": 240
+    }
+  },
+  "rois": {
+    "gold_hud": {
+      "x": 0.66,
+      "y": 0.015,
+      "w": 0.10,
+      "h": 0.07,
+      "purpose": "OCR gold amount"
+    },
+    "energy_hud": {
+      "x": 0.015,
+      "y": 0.74,
+      "w": 0.12,
+      "h": 0.18,
+      "purpose": "OCR/visual energy indicator"
+    },
+    "top_banner": {
+      "x": 0.18,
+      "y": 0.02,
+      "w": 0.64,
+      "h": 0.18,
+      "purpose": "OCR screen title such as Victory or Choose a Card"
+    },
+    "center_panel": {
+      "x": 0.18,
+      "y": 0.12,
+      "w": 0.64,
+      "h": 0.62,
+      "purpose": "Template/color probes for reward panels"
+    },
+    "full_frame": {
+      "x": 0.0,
+      "y": 0.0,
+      "w": 1.0,
+      "h": 1.0,
+      "purpose": "Fallback full-frame probes"
+    }
+  },
+  "ocr": {
+    "backend": "paddleocr",
+    "model": "PP-OCRv5",
+    "lang": "en",
+    "roi_ids": ["gold_hud", "energy_hud", "top_banner", "center_panel"],
+    "keywords": [
+      "choose a card",
+      "reward",
+      "rewards",
+      "victory",
+      "shop",
+      "relic",
+      "proceed",
+      "skip",
+      "take"
+    ]
+  },
+  "templates": [
+    {
+      "id": "victory_banner",
+      "path": "configs/templates/slay-the-spire/victory_banner.png",
+      "roi_id": "top_banner",
+      "label": "victory",
+      "match_threshold": 0.82
+    },
+    {
+      "id": "reward_panel",
+      "path": "configs/templates/slay-the-spire/reward_panel.png",
+      "roi_id": "center_panel",
+      "label": "reward",
+      "match_threshold": 0.78
+    }
+  ],
+  "screen_states": {
+    "reward": {
+      "positive_keywords": ["choose a card", "reward", "rewards", "relic", "take", "skip"],
+      "template_ids": ["reward_panel"],
+      "positive_rois": ["top_banner", "center_panel"],
+      "min_confidence": 0.65
+    },
+    "victory": {
+      "positive_keywords": ["victory", "proceed"],
+      "template_ids": ["victory_banner"],
+      "positive_rois": ["top_banner"],
+      "min_confidence": 0.65
+    },
+    "shop": {
+      "positive_keywords": ["shop"],
+      "template_ids": [],
+      "positive_rois": ["top_banner", "center_panel"],
+      "min_confidence": 0.70
+    },
+    "combat": {
+      "positive_keywords": [],
+      "template_ids": [],
+      "positive_rois": ["energy_hud"],
+      "min_confidence": 0.70
+    },
+    "map": {
+      "positive_keywords": [],
+      "template_ids": [],
+      "positive_rois": ["full_frame"],
+      "min_confidence": 0.70
+    }
+  },
+  "audio": {
+    "sample_rate": 16000,
+    "window_s": 0.2,
+    "hop_s": 0.05,
+    "min_gap_s": 1.25,
+    "threshold_sigma": 2.75,
+    "cue_templates": []
+  },
+  "fusion": {
+    "target_label": "reward_moment",
+    "reward_states": ["reward", "victory"],
+    "reward_keywords": ["choose a card", "reward", "rewards", "victory", "relic", "take"],
+    "cluster_gap_s": 2.5,
+    "emit_threshold": 0.80,
+    "audio_boost_window_s": 1.25,
+    "audio_boost_max": 0.1,
+    "audio_policy": "boost_only_never_emit",
+    "reward_items_policy": "stub_empty_for_rga_001"
+  },
+  "eval": {
+    "default_tolerance_s": 2.0,
+    "obvious_only": true,
+    "target_precision": 0.80,
+    "target_recall": 0.60,
+    "target_median_abs_error_s": 2.0
+  }
+}
